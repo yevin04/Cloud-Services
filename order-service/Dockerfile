@@ -19,6 +19,8 @@ EXPOSE 4004
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=4004
+ENV MONGO_URI=mongodb+srv://yevinraja_db_user:isLxjtKxrCEEMZ30@yevinscluster.vqefddf.mongodb.net/?appName=YevinsCluster/cloudRetailOrders
+ENV JWT_SECRET=dev_secret_change_later
 
 # Start the application
 CMD ["node", "src/server.js"]

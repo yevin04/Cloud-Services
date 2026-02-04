@@ -1,0 +1,194 @@
+name: Build & Deploy to ECS (Monorepo)
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  id-token: write     # required for OIDC
+  contents: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+  ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
+  ECR_BASE: ${{ vars.ECR_BASE }} # e.g. cloudretail (optional)
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Detect changed services under apps/*
+      - id: set-matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Get changed files between previous and current commit
+          CHANGED="$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} || true)"
+
+          # Extract service names from apps/<service>/
+          SERVICES="$(echo "$CHANGED" | awk -F/ '$1=="apps"{print $2}' | sort -u | tr '\n' ' ')"
+
+          if [ -z "$SERVICES" ]; then
+            echo "No apps/* changes detected. Exiting with empty matrix."
+            echo 'matrix={"include":[]}' >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Build a JSON matrix. Map each service to ECS metadata here.
+          # IMPORTANT: containerName must match container name in task definition.
+          JSON='{"include":['
+          FIRST=1
+          for SVC in $SERVICES; do
+            case "$SVC" in
+              api-gateway)
+                ECS_SERVICE="api-gateway-svc"
+                TASK_FAMILY="api-gateway-task"
+                CONTAINER="api-gateway"
+                ;;
+              auth)
+                ECS_SERVICE="auth-svc"
+                TASK_FAMILY="auth-task"
+                CONTAINER="auth"
+                ;;
+              products)
+                ECS_SERVICE="products-svc"
+                TASK_FAMILY="products-task"
+                CONTAINER="products"
+                ;;
+              orders)
+                ECS_SERVICE="orders-svc"
+                TASK_FAMILY="orders-task"
+                CONTAINER="orders"
+                ;;
+              *)
+                echo "Unknown service: $SVC (add mapping in workflow)"; exit 1 ;;
+            esac
+
+            [ $FIRST -eq 1 ] || JSON="$JSON,"
+            FIRST=0
+
+            JSON="$JSON{\"service\":\"$SVC\",\"ecsService\":\"$ECS_SERVICE\",\"taskFamily\":\"$TASK_FAMILY\",\"container\":\"$CONTAINER\"}"
+          done
+          JSON="$JSON]}"
+
+          echo "matrix=$JSON" >> $GITHUB_OUTPUT
+          echo "Detected matrix: $JSON"
+
+  build-and-deploy:
+    needs: detect-changes
+    if: ${{ fromJson(needs.detect-changes.outputs.matrix).include[0] != null }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & push image
+        id: build
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SVC="${{ matrix.service }}"
+          ECR_REPO="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_BASE}/${SVC}"
+          TAG="${GITHUB_SHA}"
+
+          # Create repo if it doesn't exist (optional but helpful for new accounts)
+          aws ecr describe-repositories --repository-names "${ECR_BASE}/${SVC}" >/dev/null 2>&1 \
+            || aws ecr create-repository --repository-name "${ECR_BASE}/${SVC}" >/dev/null
+
+          docker build \
+            -t "${ECR_REPO}:${TAG}" \
+            -f "apps/${SVC}/Dockerfile" \
+            "apps/${SVC}"
+
+          docker push "${ECR_REPO}:${TAG}"
+
+          echo "image=${ECR_REPO}:${TAG}" >> $GITHUB_OUTPUT
+
+      - name: Fetch current task definition
+        id: taskdef
+        shell: bash
+        run: |
+          set -euo pipefail
+          aws ecs describe-task-definition \
+            --task-definition "${{ matrix.taskFamily }}" \
+            --query 'taskDefinition' \
+            > taskdef.json
+
+      - name: Render new task definition with updated image
+        id: render
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          IMAGE="${{ steps.build.outputs.image }}"
+          CONTAINER="${{ matrix.container }}"
+
+          # Strip fields AWS doesn't allow on register-task-definition,
+          # then update the image for the specific container
+          jq \
+            --arg IMAGE "$IMAGE" \
+            --arg CONTAINER "$CONTAINER" \
+            'del(
+              .taskDefinitionArn,
+              .requiresAttributes,
+              .compatibilities,
+              .revision,
+              .status,
+              .registeredAt,
+              .registeredBy
+            )
+            | .containerDefinitions = (.containerDefinitions | map(
+                if .name == $CONTAINER then .image = $IMAGE else . end
+              ))' \
+            taskdef.json > taskdef-rendered.json
+
+      - name: Register new task definition revision
+        id: register
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://taskdef-rendered.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          echo "arn=$ARN" >> $GITHUB_OUTPUT
+
+      - name: Deploy to ECS service
+        shell: bash
+        run: |
+          set -euo pipefail
+          aws ecs update-service \
+            --cluster "${ECS_CLUSTER}" \
+            --service "${{ matrix.ecsService }}" \
+            --task-definition "${{ steps.register.outputs.arn }}"
+
+      - name: Wait for service stability
+        shell: bash
+        run: |
+          set -euo pipefail
+          aws ecs wait services-stable \
+            --cluster "${ECS_CLUSTER}" \
+            --services "${{ matrix.ecsService }}"
