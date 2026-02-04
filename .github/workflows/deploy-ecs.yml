@@ -57,21 +57,22 @@ jobs:
               auth-service)
                 ECS_SERVICE="nikes-auth-service-service-pvhd5jsv"
                 TASK_FAMILY="nikes-auth-service"
-                CONTAINER="nikes-auth-service212295301881.dkr.ecr.ap-south-1.amazonaws.com/service/authservice@sha256:47b88afb5230a51cdbd18671f6038c81360c9e4ef0c5f477503c538ce0523f4b
+                CONTAINER="auth"
+                ;;
               inventory-service)
                 ECS_SERVICE="nikes-inventory-service-service-3comurah"
                 TASK_FAMILY="nikes-inventory-service"
-                CONTAINER="212295301881.dkr.ecr.ap-south-1.amazonaws.com/service/inventoryservice@sha256:ca7811e0e44aa588293fbb6cf418bf5fe56fdbc37768b6224860a176f602d376"
+                CONTAINER="inventory"
                 ;;
               product-service)
                 ECS_SERVICE="nikes-product-service-service-r57zdypd"
                 TASK_FAMILY="nikes-product-service"
-                CONTAINER="212295301881.dkr.ecr.ap-south-1.amazonaws.com/service/productservice@sha256:af6cdc0bc8a54e0cedfae76de73197a3e081d74cb3f77d564f6878e877cc8d63"
+                CONTAINER="product"
                 ;;
               order-service)
                 ECS_SERVICE="nikes-order-service-service-2etwdan6"
                 TASK_FAMILY="nikes-order-service"
-                CONTAINER="212295301881.dkr.ecr.ap-south-1.amazonaws.com/service/orderservice@sha256:2979dac9eb787265d924b1aa18e31f0159b80c2a90d3d9c65d77522dd7ba6138"
+                CONTAINER="order"
                 ;;
               *)
                 echo "Unknown service: $SVC (add mapping in workflow)"; exit 1 ;;
