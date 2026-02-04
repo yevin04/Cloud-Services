@@ -132,8 +132,8 @@ jobs:
 
           docker build \
             -t "${ECR_REPO}:${TAG}" \
-            -f "apps/${SVC}/Dockerfile" \
-            "apps/${SVC}"
+            -f "${SVC}/Dockerfile" \
+            "${SVC}"
 
           docker push "${ECR_REPO}:${TAG}"
 
