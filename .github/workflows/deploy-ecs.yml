@@ -34,8 +34,13 @@ jobs:
           # Get changed files between previous and current commit
           CHANGED="$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} || true)"
 
-          # Extract service names from apps/<service>/
-          SERVICES="$(echo "$CHANGED" | awk -F/ '$1=="apps"{print $2}' | sort -u | tr '\n' ' ')"
+          KNOWN_SERVICES_REGEX='^(auth-service|product-service|order-service|inventory-service)$'
+
+          SERVICES="$(echo "$CHANGED" \
+            | awk -F/ 'NF>1 {print $1}' \
+            | grep -E "$KNOWN_SERVICES_REGEX" \
+            | sort -u \
+            | tr '\n' ' ')"
 
           if [ -z "$SERVICES" ]; then
             echo "No apps/* changes detected. Exiting with empty matrix."
