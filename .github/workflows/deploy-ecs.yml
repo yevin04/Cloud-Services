@@ -38,7 +38,7 @@ jobs:
 
           SERVICES="$(echo "$CHANGED" \
             | awk -F/ 'NF>1 {print $1}' \
-            | grep -E "$KNOWN_SERVICES_REGEX" \
+            | grep -E "$KNOWN_SERVICES_REGEX" || true \
             | sort -u \
             | tr '\n' ' ')"
 

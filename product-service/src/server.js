@@ -1,4 +1,4 @@
-console.log("Starting Product Service...");
+console.log("Starting Product Service... (Force Deploy)");
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
