@@ -1,3 +1,4 @@
+console.log("Starting Product Service...");
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -32,7 +33,7 @@ app.get("/health", (req, res) => {
 
 // Start server
 const PORT = process.env.PORT || 4002;
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Product service running on port ${PORT}`);
   console.log(`AWS Region: ${process.env.AWS_REGION}`);
   console.log(`Using DynamoDB table: ${process.env.DDB_PRODUCTS_TABLE || "Products"}`);
