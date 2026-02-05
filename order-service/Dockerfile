@@ -21,7 +21,7 @@ ENV NODE_ENV=production
 ENV PORT=4004
 ENV JWT_SECRET=dev_secret_change_later
 ENV AWS_REGION=ap-south-1
-ENV DDB_PRODCUTS_TABLE=Orders
+ENV DDB_ORDERS_TABLE=Orders
 
 # Start the application
 CMD ["node", "src/server.js"]

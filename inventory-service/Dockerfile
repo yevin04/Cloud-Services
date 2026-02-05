@@ -20,7 +20,7 @@ EXPOSE 4003
 ENV NODE_ENV=production
 ENV PORT=4003
 ENV AWS_REGION=ap-south-1
-ENV DDB_PRODCUTS_TABLE=Inventory
+ENV DDB_INVENTORY_TABLE=Inventory
 
 # Start the application
 CMD ["node", "src/server.js"]
