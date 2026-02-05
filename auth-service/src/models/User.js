@@ -1,29 +1,18 @@
-import mongoose from "mongoose";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
-const userSchema = new mongoose.Schema(
-  {
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      trim: true
-    },
-    password: {
-      type: String,
-      required: true
-    },
-    role: {
-      type: String,
-      enum: ["USER", "ADMIN"],
-      default: "USER"
-    }
-  },
-  {
-    timestamps: true
-  }
-);
+// Initialize DynamoDB client
+const client = new DynamoDBClient({
+  region: process.env.AWS_REGION || "ap-south-1"
+});
 
-const User = mongoose.model("User", userSchema);
+// Create document client for easier JSON operations
+const docClient = DynamoDBDocumentClient.from(client);
 
-export default User;
+// Table name from environment
+const TABLE_NAME = process.env.DDB_USERS_TABLE || "Users";
+
+// Valid user roles
+const VALID_ROLES = ["USER", "ADMIN"];
+
+export { docClient, TABLE_NAME, VALID_ROLES };

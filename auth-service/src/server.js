@@ -1,12 +1,9 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 
-
 dotenv.config();
-connectDB();
 
 const app = express();
 
@@ -30,4 +27,5 @@ app.get("/health", (req, res) => {
 const PORT = process.env.PORT || 4001;
 app.listen(PORT, () => {
   console.log(`Auth service running on port ${PORT}`);
+  console.log(`Using DynamoDB table: ${process.env.DDB_USERS_TABLE || "Users"}`);
 });

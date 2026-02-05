@@ -1,50 +1,18 @@
-import mongoose from "mongoose";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
-const orderItemSchema = new mongoose.Schema(
-  {
-    productId: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true
-    },
-    variant: {
-      type: String,
-      required: true
-    },
-    quantity: {
-      type: Number,
-      required: true,
-      min: 1
-    },
-    price: {
-      type: Number,
-      required: true
-    }
-  },
-  { _id: false }
-);
+// Initialize DynamoDB client
+const client = new DynamoDBClient({
+  region: process.env.AWS_REGION || "ap-south-1"
+});
 
-const orderSchema = new mongoose.Schema(
-  {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true
-    },
-    items: [orderItemSchema],
-    totalAmount: {
-      type: Number,
-      required: true
-    },
-    status: {
-      type: String,
-      enum: ["CREATED", "PAID", "CANCELLED"],
-      default: "CREATED"
-    }
-  },
-  {
-    timestamps: true
-  }
-);
+// Create document client for easier JSON operations
+const docClient = DynamoDBDocumentClient.from(client);
 
-const Order = mongoose.model("Order", orderSchema);
+// Table name from environment
+const TABLE_NAME = process.env.DDB_ORDERS_TABLE || "Orders";
 
-export default Order;
+// Valid order statuses
+const VALID_ORDER_STATUSES = ["CREATED", "PAID", "CANCELLED"];
+
+export { docClient, TABLE_NAME, VALID_ORDER_STATUSES };

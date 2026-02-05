@@ -1,30 +1,15 @@
-import mongoose from "mongoose";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
-const inventorySchema = new mongoose.Schema(
-  {
-    productId: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true
-    },
-    variant: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    stock: {
-      type: Number,
-      required: true,
-      min: 0
-    }
-  },
-  {
-    timestamps: true
-  }
-);
+// Initialize DynamoDB client
+const client = new DynamoDBClient({
+  region: process.env.AWS_REGION || "ap-south-1"
+});
 
-// Prevent duplicate inventory records for same product + variant
-inventorySchema.index({ productId: 1, variant: 1 }, { unique: true });
+// Create document client for easier JSON operations
+const docClient = DynamoDBDocumentClient.from(client);
 
-const Inventory = mongoose.model("Inventory", inventorySchema);
+// Table name from environment
+const TABLE_NAME = process.env.DDB_INVENTORY_TABLE || "Inventory";
 
-export default Inventory;
+export { docClient, TABLE_NAME };
