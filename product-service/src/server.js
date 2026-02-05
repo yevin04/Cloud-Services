@@ -18,8 +18,7 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }));
-// Important for ALB preflight
-app.options("*", cors());
+
 
 app.use(express.json());
 
