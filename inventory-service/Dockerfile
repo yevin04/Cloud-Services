@@ -19,7 +19,8 @@ EXPOSE 4003
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=4003
-ENV MONGO_URI=mongodb+srv://yevinraja_db_user:isLxjtKxrCEEMZ30@yevinscluster.vqefddf.mongodb.net/?appName=YevinsCluster/cloudRetailInventory
+ENV AWS_REGION=ap-south-1
+ENV DDB_PRODCUTS_TABLE=Inventory
 
 # Start the application
 CMD ["node", "src/server.js"]
