@@ -7,19 +7,11 @@ dotenv.config();
 
 const app = express();
 
-// Allowed origins for CORS
-const allowedOrigins = [
-  'http://nikes-alb-1822383016.ap-south-1.elb.amazonaws.com',
-  'http://nikes-frontend-yevinr.s3-website.ap-south-1.amazonaws.com',
-  'http://localhost:5173','*'
-];
-
 // Middleware
 app.use(cors({
-  origin: allowedOrigins,
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 
