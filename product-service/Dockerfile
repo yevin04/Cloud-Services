@@ -20,7 +20,7 @@ EXPOSE 4002
 ENV NODE_ENV=production
 ENV PORT=4002
 ENV AWS_REGION=ap-south-1
-ENV DDB_PRODCUTS_TABLE=Products
+ENV DDB_PRODUCTS_TABLE=Products
 
 # Start the application
 CMD ["node", "src/server.js"]

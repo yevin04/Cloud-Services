@@ -11,7 +11,7 @@ const app = express();
 const allowedOrigins = [
   'http://nikes-alb-1822383016.ap-south-1.elb.amazonaws.com',
   'http://nikes-frontend-yevinr.s3-website.ap-south-1.amazonaws.com',
-  'http://localhost:5173'
+  'http://localhost:5173','*'
 ];
 
 // Middleware
