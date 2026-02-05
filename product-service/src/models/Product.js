@@ -10,7 +10,7 @@ const client = new DynamoDBClient({
 const docClient = DynamoDBDocumentClient.from(client);
 
 // Table name from environment
-const TABLE_NAME = process.env.DDB_PRODCUTS_TABLE || "Products";
+const TABLE_NAME = process.env.DDB_PRODUCTS_TABLE || "Products";
 
 // Valid categories for validation
 const VALID_CATEGORIES = ["Shoes", "Tees", "Bags", "Pants", "Other"];

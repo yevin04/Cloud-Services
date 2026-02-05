@@ -35,5 +35,6 @@ app.get("/health", (req, res) => {
 const PORT = process.env.PORT || 4002;
 app.listen(PORT, () => {
   console.log(`Product service running on port ${PORT}`);
-  console.log(`Using DynamoDB table: ${process.env.DDB_PRODCUTS_TABLE || "Products"}`);
+  console.log(`AWS Region: ${process.env.AWS_REGION}`);
+  console.log(`Using DynamoDB table: ${process.env.DDB_PRODUCTS_TABLE || "Products"}`);
 });
